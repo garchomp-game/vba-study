@@ -45,7 +45,7 @@ Sub Sample(ByRef A As Long)
 End Sub
 ```
 
-値私をするときは、ByValを使う。
+値渡しをするときは、ByValを使う。
 
 ```vb
 Sub Sample(ByVal A As Long)
@@ -359,3 +359,310 @@ sub Sample()
 end sub
 
 なお、一気に複数の改装を作ることはできない。
+
+## ワークシート関数
+
+### worksheetFunctionの使い方
+
+普段エクセルで使っている関数は、WorksheetFunction.関数名(引数)の構文で呼び出すことができる。
+
+```vb
+WorksheetFunction.Sum(Range("A1:A5"))
+```
+
+### いろいろな関数
+
+まずはsum関数
+
+```vb
+sub sample()
+    range("a6") = worksheetfunction.sum(range("a1:a5"))
+end sub
+```
+
+countif/sumif関数
+
+```vb
+sub sample()
+    with worksheetFunction
+        range("e1") = .contif(range("a1:a6"), "佐々木")
+        range("e2") = .sumif(range("a1:a6"), "佐々木", range("b1:b6"))
+        range("e3") = range("e2") / range("e1")
+    end with
+end sub
+```
+
+※ withステートメントは、パッケージ名を省略できる機能を持っているだけで、その中に別の関数があっても問題はない。
+
+存在確認
+
+```vb
+sub sample()
+    dim a as range
+    set a = range("a1:a6").find(what:="佐々木")
+    if a is nothing Then
+        msgbox "存在しません"
+    else
+        msgbox "存在します"
+    end if
+end sub
+```
+
+large/small関数
+
+```vb
+sub sample()
+    with worksheetfunction
+        range("d1") = .large(range("a2:a6"), 1)
+        range("d2") = .large(range("a2:a6"), 2)
+        range("d3") = .large(range("a2:a6"), 3)
+    end with
+end sub
+```
+
+vlookup関数
+
+```vb
+sub sample()
+    range("e1") = worksheetfunction.vlookup(range("d1"), range("a2:b7"), 2, false)
+end sub
+```
+
+match + index関数
+
+```vb
+sub sample()
+    dim n as Long
+    with worksheetfunction
+        N = .match(range("d1"), range("b2:b7"), 0)
+        range("e1") = .index(range("a2:a7"), N)
+    end with
+end sub
+```
+
+eomonth関数
+
+```vb
+sub sample()
+    range("b1") = worksheetfunction.eomonth(range("a1"), 0)
+end sub
+```
+
+## セルの検索とオートフィルターの操作
+
+### セルの検索
+
+findメソッド
+
+|オプション名   |説明                                      |
+|---------------|------------------------------------------|
+|What           |検索する語句を指定します。                |
+|After          |次のセルから検索開始。省略可能(左上になる)|
+|LookIn         |検索対象の指定                            |
+|LookAt         |完全一致検索か否か                        |
+|SearchOrder    |検索の方向(右か下か)                      |
+|SearchDirection|次か前か                                  |
+|MatchCase      |大文字小文字区別するか                    |
+|MatchByte      |半角全角区別するか                        |
+
+LookAtには、**xlWhole**が完全一致、**xlPart**が部分位置である。
+
+```vb
+sub sample()
+    dim a as range
+    set a = range("a1:a8").find(what:="佐々木", lookat:=xlhwole)
+    a.offset(0, 1) = 100
+end sub
+```
+
+見つからなかった時の処理は、基本的には以下のとおりである。
+
+```vb
+sub sample()
+    if Not A Is Nothing Then
+        ~~処理
+    end if
+end sub
+```
+
+この仕組みを利用したサンプル
+
+```vb
+sub sample()
+    dim a as Range
+    set a = range("a:a").find(what:="佐々木")
+    if not a is nothing Then
+        a.offset(0, 1) = 100
+    else
+        "見つかりません"
+    end if
+end sub
+```
+
+### 6-2 検索結果の操作
+
+見つかったセルを含む行を削除するには、以下のとおりである。
+
+```vb
+削除する行.Delete
+```
+
+これを利用した関数
+
+```vb
+sub sample()
+    dim a as range
+    set a = range("a:a").find(what:="佐々木")
+    if a is nothing Then
+        msgbox "見つかりません"
+    else
+        a.entirerow.delete
+    end if
+end sub
+```
+
+なお、行はrow、列はcolumnであるが、それぞれ行全体、列全体を指定する場合はentirerow,entirecolumnを指定する。
+
+見つかったセルを起点にして、別のセルを操作する場合は、offsetを使う
+
+```vb
+起点セル.Offset(行, 列)
+```
+
+これを利用した例
+
+```vb
+sub sample()
+    dim a as range
+    set a = range("a:a").find(what:="石橋")
+    if a is nothing Then
+        msgbox "見つかりません"
+    else
+        a.offset(0, 1) = 1000
+    end if
+end sub
+```
+
+見つかったセルを含むセル範囲をコピーするには、以下の構文で可能。
+
+```vb
+コピー元のセル範囲.copy コピー先のセル
+```
+
+例
+
+```vb
+sub sample()
+    dim a as range
+    set a = range("a:a").find(what:="佐々木")
+    if a is nothing Then
+        msgbox "見つかりません"
+    else
+        range(a, a.end(xltoright)).copy range("E2")
+    end if
+end sub
+```
+
+resizeの構文は以下
+
+```vb
+range("b2").resize(4, 3)
+```
+
+これを利用した例が以下の通り
+
+```vb
+sub sample()
+    dim a as range
+    set a = range("a:a").find(what:="佐々木")
+    if a is nothing Then
+        msgbox "見つかりません"
+    else
+        a.resize(1, 3).copy range("e2")
+    end if
+end sub
+```
+
+### 6-3 オートフィルターの操作
+
+オートフィルターの構文は以下の通り
+
+```vb
+セル.AutoFilter Field, Criteria1, Operator, Criteria2
+```
+
+使用例
+
+```vb
+sub sample()
+    range("a1").autofilter field:=1, criteria1:="佐々木"
+end sub
+```
+
+省略記法もある
+
+```vb
+sub sample()
+    range("a1").autofilter 1, "佐々木"
+end sub
+```
+
+xlAndや、xlOrなどをつなげて複数の上限を指定することができる。
+
+```vb
+sub sample()
+    range("a1").autofilter 1, "佐々木", xlOr, "桜井"
+end sub
+```
+
+三つ以上指定するときは、配列にして渡す
+
+```vb
+sub sample()
+    dim a(2) as string
+    a(0) = "佐々木"
+    a(1) = "桜井"
+    a(2) = "松本"
+    range("a1").autofilter 1, a, xlfiltervalues
+end sub
+```
+
+絞り込んだ結果をコピーする
+
+```vb
+sub sample()
+    range("a1").autofilter 1, "佐々木"
+    range("a1").currentregion.copy sheets("sheet2").range("a1")
+end sub
+```
+
+絞り込んだ結果をカウントする
+
+文法は以下
+
+```vb
+SUBTOTAL(集計方法, セル範囲)
+```
+
+例は以下の通り
+
+```vb
+sub sample()
+    dim n as Long
+    range("a1").autofilter 1, "佐々木"
+    n = worksheetfunction.subtotal(3, range("a:a"))
+    msgbox "佐々木は、" & N - 1 & "件あります"
+end sub
+```
+
+絞り込んだ結果の列を編集する
+
+```vb
+sub sample()
+    range("a1").autofilter 1, "佐々木"
+    range(range("d2"), cells(rows.count, 4).end(xlUp)) = 1000
+    range("a1").autofilter
+end sub
+```
+
+※rows.countは、最終行を取得する読み取り専用メンバといえる。ちなみに、列の最終の取得は、columns.countである。
