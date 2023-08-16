@@ -302,3 +302,71 @@ Sub sample()
   Range(Cells(2, 4), Cells(Rows.Count, 4).End(xlUp)) = 1000
   Range("a1").AutoFilter
 End Sub
+
+' データ並び替えの例
+Sub sample()
+  ActiveWorkbook.Worksheets("sheet1").Sort.SortFields.Clear
+  ActiveWorkbook.Worksheets("sheet1").Sort.SortFields.Add2 Key:=Range("d2"), _
+    SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+  With ActiveWorkbook.Worksheets("sheet1").Sort
+    .SetRange Range("a2:d9")
+    .Header = xlNo
+    .MatchCase = False
+    .SortMethod = xlPinYin
+    .Apply
+  End With
+End Sub
+
+' 別解
+Sub sample()
+  With Sheets("sheet1").Sort
+    With .SortFields
+      .Clear
+      .Add2 _
+        Key := Range("d2")
+    End With
+    .SetRange Range("a2:d9")
+    .Header = xlNo
+    .Apply
+  End With
+End Sub
+
+' 従来の簡易的な並べ替え方法
+Sub sample()
+  Range("a1").Sort _
+    key1 := Range("d1"), _
+    order1 := xlAscending, _
+    Header := xlYes
+End Sub
+
+' テーブル全体を選択する
+Sub sample()
+  Range("a1").ListObject.Range.Select
+  Range("a1").ListObject.DataBodyRange.Select
+  Range("a1").ListObject.ListColumns(3).Range.Select
+  Range("a1").ListObject.ListColumns(3).DataBodyRange.Select
+  Range("a1").ListObject.ListRows(3).Range.Select
+  ' ListRows(行選択)はDataBodyRangeがない。
+End Sub
+
+' 構造化参照
+Sub sample()
+  Range("テーブル1[#All]").Select
+End Sub
+
+
+' テーブル内のデータを探す
+Sub sample()
+  Range("a1").ListObject.Range.AutoFilter 2, "新垣"
+End Sub
+
+' 絞り込んだ結果をコピーする
+Sub sample()
+  Range("a1").ListObject.Range.AutoFilter 2, "新垣"
+  Range("a1").ListObject.Range.Copy Sheets("sheet2").Range("a1")
+End Sub
+
+' 列を追加するサンプル
+Sub sample()
+  Range("テーブル1[[#Data], [数値]]").Offset(0, 1) = "=[@数値]*2"
+End Sub

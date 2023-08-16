@@ -666,3 +666,221 @@ end sub
 ```
 
 ※rows.countは、最終行を取得する読み取り専用メンバといえる。ちなみに、列の最終の取得は、columns.countである。
+
+## データの並べ替え
+
+### Excel2007以降の並べ替え
+
+サンプル
+
+```vb
+sub sample()
+    activeworkbook.worksheets("sheet1").sort.sortfields.clear
+    activeworkbook.worksheets("sheet1").sort.sortfields.add2 key:=range("d2"), _
+        sorton:=xlsortonvalues, order:=xlascending,dataoption:=xlsortnormal
+    with activeworkbook.worksheets("sheet1").sort
+        .setrange range("a2:d9")
+        .header = xlno
+        .matchcase = false
+        .sortmethod = xlpinyin
+        .apply
+    end witk
+end sub
+```
+
+引数sortOnに指定できる定数
+
+|定数             |数値|意味                              |規定値|
+|-----------------|----|----------------------------------|------|
+|xlSortOnValues   |0   |セル内のデータで並べ替える        |〇    |
+|xlSortOnCellColor|1   |セルの背景色で並べ替える          |      |
+|xlSortOnFontColor|2   |セルの文字色で並べ替える          |      |
+|xlSortOnIcon     |3   |条件付き書式のアイコンで並べ替える|      |
+
+orderに指定できる定数
+
+|定数        |数値|意味|規定値|
+|------------|----|----|------|
+|xlAxcending |1   |昇順|〇    |
+|xlDescending|2   |降順|      |
+
+DataOptionに指定できる引数
+
+|定数               |数値|意味                            |規定値|
+|-------------------|----|--------------------------------|------|
+|xlSortNormal       |0   |数値と文字列を別々に並べ替える  |〇    |
+|xlSortTextAsNumbers|1   |文字列を数値とみなして並べ替える|      |
+
+並べ替えの挙動を指定して並べ替える。
+
+headerプロパティに指定できる定数
+
+|定数   |数値|意味                      |規定値|
+|-------|----|--------------------------|------|
+|xlGuess|0   |excelが自動判定する       |〇    |
+|xlYes  |1   |壱行目はタイトル行        |      |
+|xlNo   |1   |壱行目はタイトル行ではない|      |
+
+orientatioプロパティに指定できる定数
+
+|定数         |数値|意味            |規定値|
+|-------------|----|----------------|------|
+|xlTopToBottom|1   |上下に並べ替える|〇    |
+|xlLeftToRight|2   |左右に並べ替える|      |
+
+sortmethodプロパティに指定できる定数
+
+|定数    |数値|意味                          |規定値|
+|--------|----|------------------------------|------|
+|xlPinYin|1   |日本語をふりがなで並べ替える  |〇    |
+|xlStroke|2   |日本語を文字コードで並べ替える|      |
+
+コンパクトに実装する場合は以下の通り
+
+```vb
+Sub sample()
+  With Sheets("sheet1").Sort
+    With .SortFields
+      .Clear
+      .Add2 _
+        Key := Range("d2")
+    End With
+    .SetRange Range("a2:d9")
+    .Header = xlNo
+    .Apply
+  End With
+End Sub
+```
+
+### 7-2 excel 2003までの並べ替え
+
+従来の並べ替えの基礎構文
+
+```vb
+並べ替えるセル範囲.sort key1, order1, header
+```
+
+例
+
+```vb
+sub sample()
+    range("a1").sort key1:=range("d1"), order1:=xlascending, header:=xlyes
+end sub
+```
+
+ふりがなのは、phometic.textで確認することができる。
+
+例：
+
+```vb
+sub sample()
+    msgbox range("a2").phometic.text
+end sub
+```
+
+## 8 テーブルの操作
+
+### 8－1テーブルを特定する
+
+テーブルのセルから特定する
+
+```vb
+range("a1").listobject
+```
+
+テーブルが存在するシートから特定する場合は
+
+```vb
+対象のシート.listobjects(インデックス)
+対象のシート.listobjects(テーブル名)
+```
+
+といったことが可能。
+
+例えば、対象のシート`.ListObjects(1)`といったような形で指定が可能。
+
+または、`Range("テーブル1")`といったような形で指定することも可能。
+
+#### 見出し(タイトル)行を含むテーブル全体
+
+見出し行を含むテーブル全体は、LisObject.Rangeで表される。
+
+```vb
+Range("a1").ListObject.Range.Select
+```
+
+見出しを含まないデータ行全体はListObject.DataBodyRangeで表される。
+
+```vb
+Range("a1").ListObject.DataBodyRange.Select
+```
+
+見出し行はHeaderRowRangeで表される。
+
+```vb
+Range("a1").ListObject.HeaderRowRange.Select
+```
+
+列は、ListColumn、行はListRowで表される。
+
+まとめると以下の通り。
+
+```vb
+Sub sample()
+  Range("a1").ListObject.Range.Select
+  Range("a1").ListObject.DataBodyRange.Select
+  Range("a1").ListObject.ListColumns(3).Range.Select
+  Range("a1").ListObject.ListColumns(3).DataBodyRange.Select
+  Range("a1").ListObject.ListRows(3).Range.Select
+  ' ListRows(行選択)はDataBodyRangeがない。
+End Sub
+```
+
+### 8-3 構造化参照を使って特定する
+
+データを選択するときは、今まで紹介した方法以外に、構造化参照で選択する方法もある。
+
+```vb
+テーブル名[[特殊項目演算子], [列指定子]]
+```
+
+項目は、All, Data, Headers, Totalsなどがある。
+
+```vb
+Range("テーブル1[#All]")
+```
+
+### 8-4 特定のデータを操作する
+
+テーブル内のデータを探すとき、autofilterを組み合わせる検索方法がある。
+
+```vb
+sub sample()
+    range("a1").listobject.range.autofilter 2, "田中"
+end sub
+```
+
+見出し行ごと別シートにコピーすることもできる。
+
+```vb
+sub sample()
+    range("a1").listobject.range.autofilter 2, "新垣"
+    range("a1").listobject.range.copy sheets("sheet2").range("a1")
+end sub
+```
+
+見出しを含まない行をコピーする場合は、rangeをdatabodyrangeに置き換えればよい
+
+また、これらの応用で、構造化参照を使ったコピーも可能。
+
+ListColumnsなどを使い、特定の列だけをコピーするといった使い方も可能。
+
+行を削除する場合は、ListColumns.delete、追加する場合はListColumns.addなどがある。
+
+また、構造化参照を使った挿入方法もある
+
+```vb
+sub sample()
+    range("テーブル1[[#Data], [数値]]").offset(0, 1) = "=[@数値]*2"
+end sub
+```
