@@ -370,3 +370,87 @@ End Sub
 Sub sample()
   Range("テーブル1[[#Data], [数値]]").Offset(0, 1) = "=[@数値]*2"
 End Sub
+
+' 例外処理のサンプル
+Sub sample()
+  On Error GoTo Error1
+  Sheets(2).Range("a1") = 100
+  MsgBox "代入しました"
+  Exit Sub
+Error1:
+  MsgBox "エラーが発生しました"
+End Sub
+
+' エラー分岐など
+Sub sample()
+  On Error GoTo Error1
+  Worksheets.Add.name = "sheet1"
+  Sheets("sheet1").name = Range("a1")
+  Exit Sub
+Error1:
+  Select Case Err.Number
+    Case 9
+      MsgBox "sheet1が存在しません"
+    Case 1004
+      MsgBox "同名のシートが存在します"
+    Case Else
+      MsgBox "想定していないエラーです"
+  End Select
+End Sub
+
+' 発生したエラーを無視する。
+Sub sample()
+  On Error Resume Next
+  ActiveWorkbook.SaveAs "book1.xlsm"
+  If ActiveWorkbook.Saved = True Then
+    MsgBox "保存されました"
+  Else
+    MsgBox "保存されていません"
+  End If
+End Sub
+
+' 半角を全角に
+Sub sample()
+  Dim i As Long
+  For i = 1 To 8
+    Cells(i, 2) = StrConv(Cells(i, 1), vbWide)
+  Next i
+End Sub
+
+' 全角を半角に
+Sub sample()
+  Dim i As Long
+  For i = 1 To 8
+    Cells(i, 2) = StrConv(Cells(i, 1), vbNarrow)
+  Next i
+End Sub
+
+' 置換
+Sub sample()
+  Dim i As Long
+  For i = 1 To 8
+    Cells(i, 2) = Replace(Cells(i, 1), "-", "")
+  Next i
+End Sub
+
+' 日付操作
+Sub sample()
+  Dim i As Long
+  For i = 2 To 8
+    Cells(i, 4) = DateSerial(Cells(i, 1), Cells(i, 2), Cells(i, 3))
+  Next i
+End Sub
+
+' 文字列を数値に変換
+Sub sample()
+  Dim i As Long
+  For i = 2 To 8
+    Cells(i, 4).NumberFormat = "yyyy/m/d"
+    Cells(i, 4).Value = Cells(i, 4).Value
+  Next i
+End Sub
+
+' イミディエイトウィンドウにデバッグプリントを出力
+Sub sample()
+  Debug.Print 100
+End Sub
