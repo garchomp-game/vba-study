@@ -27,10 +27,10 @@ End Sub
 ' 添字指定バージョン
 Sub arraySample()
   Dim a() As String
-  ReDim a(3 to 4)
+  ReDim a(3 To 4)
   a(3) = "佐藤"
   a(4) = "山本"
-  ReDim Preserve a(3 to 5)
+  ReDim Preserve a(3 To 5)
   a(5) = "おとか"
   MsgBox "最小は" & LBound(a) & "、最大は" & UBound(a) & "。"
 End Sub
